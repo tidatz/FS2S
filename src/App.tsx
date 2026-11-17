@@ -53,12 +53,12 @@ export default function App() {
       const [p, c, a] = await Promise.all([
         supabase!.from('profiles').select('full_name, role').eq('id', session.user.id).maybeSingle(),
         supabase!.from('courses').select('id,title,summary,level,estimated_hours,published').eq('published', true).order('sort_order'),
-        supabase!.from('assignments').select('id,title,instructions,due_at,status').eq('student_id', session.user.id).order('created_at', { ascending: false }).limit(8),
+        supabase!.from('assignments').select('id,title,instructions,due_at,cohort_members!inner(student_id)').eq('cohort_members.student_id', session.user.id).order('created_at', { ascending: false }).limit(8),
       ])
       if (!alive) return
       setProfile(p.data as Profile | null)
       setCourses((c.data || []) as Course[])
-      setAssignments((a.data || []) as Assignment[])
+      setAssignments(((a.data || []) as any[]).map(row => ({ ...row, status: 'assigned' })) as Assignment[])
     }
     void load()
     return () => { alive = false }
